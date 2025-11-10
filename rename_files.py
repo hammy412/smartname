@@ -4,6 +4,7 @@ import pymupdf
 from pathlib import Path
 import base64
 import json
+import re
 
 def main():
     parser = argparse.ArgumentParser(description="Rename files using Ollama's LLM.")
@@ -69,7 +70,7 @@ def call_ollama_vision(image_data, model):
         except json.JSONDecodeError:
             continue
 
-    suggested = suggested.strip()
+    suggested = sanitize_filename(suggested.strip())
     if not suggested:
         suggested = "rename_me"
 
@@ -123,8 +124,26 @@ def read_text_snippet():
 def apply_casing():
     pass
 
-def sanitize_filename():
-    pass
+def sanitize_filename(filename):
+    # Remove illegal characters for filenames on most OS
+    filename = re.sub(r'[\\/*?:"<>|]', '', filename)
+    
+    # Remove surrounding whitespace
+    filename = filename.strip()
+    
+    # Remove any file extension at the end (like .txt, .jpg, .pdf)
+    filename = re.sub(r'\.[a-zA-Z0-9]{1,5}$', '', filename)
+    
+    # Replace spaces or multiple underscores with a single underscore
+    filename = re.sub(r'[\s_]+', '_', filename)
+    
+    # Make sure it’s not empty
+    if not filename:
+        filename = "rename_me"
+        
+    return filename
+
+
 
 if __name__ == "__main__":
     main()
